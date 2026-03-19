@@ -10,25 +10,19 @@ repository = "https://github.com/konradgnat/zcashskills"
 crate-type = ["cdylib"]
 
 [dependencies]
-# Neon for Node.js integration
-neon = { version = "1.0", default-features = false, features = ["napi-6"] }
-
-# ZCash cryptographic libraries
-zcash_keys = "0.2"
-zcash_address = "0.3"
-
-# Random number generation
+neon = { version = "0.10.1", default-features = false, features = ["napi-6"] }
+zcash_keys = { version = "0.12.0", features = ["sapling"] }
+zcash_address = "0.10.1"
+zcash_protocol = "0.7"
+zip32 = "0.2"
 rand = "0.8"
-
-# Additional utilities
+bip39 = { version = "2.0.0", features = ["zeroize"] }
+argon2 = "0.5.3"
+chacha20poly1305 = "0.10.1"
 hex = "0.4"
 
 [build-dependencies]
-neon-build = "1.0"
+neon-build = "0.10.1"
 
-# Optimization for release builds
 [profile.release]
 opt-level = 3
-lto = true
-codegen-units = 1
-panic = "abort"
