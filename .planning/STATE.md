@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 2 of 5 (Viewing Keys)
-Plan: 1 of 2 in current phase (plan 01 complete)
-Status: In progress
-Last activity: 2026-03-20 — Plan 02-01 complete (derive_viewing_key Neon function, ZIP-316 UIVK + UFVK)
+Plan: 2 of 2 in current phase (plan 02 complete — phase 02 complete)
+Status: Phase 2 complete, ready for Phase 3
+Last activity: 2026-03-20 — Plan 02-02 complete (JS viewing-keys skill, FVK gate, 15 unit tests, lib/index wiring)
 
-Progress: [███░░░░░░░] 30%
+Progress: [████░░░░░░] 40%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 3 min
-- Total execution time: 0.15 hours
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-wallet-persistence | 2 | 7 min | 3.5 min |
-| 02-viewing-keys | 1 | 2 min | 2 min |
+| 02-viewing-keys | 2 | 5 min | 2.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (2 min)
+- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (2 min), 02-02 (3 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -56,6 +56,8 @@ Recent decisions affecting current work:
 - [Phase 02-01]: UnifiedFullViewingKey::encode(&Network) for ZIP-316 UFVK — NOT legacy zcash_keys::encoding::encode_extended_full_viewing_key which produces zxviews1... (non-ZIP-316)
 - [Phase 02-01]: No new Cargo.toml deps needed — zcash_keys 0.12 with sapling feature already provides UnifiedFullViewingKey and UnifiedIncomingViewingKey
 - [Phase 02-01]: UIVK open question resolved: uivk.encode(&Network::MainNetwork) compiles correctly with public API — private render() path only in tests
+- [Phase 02-02]: FVK gate checked before any I/O — confirm: true checked as first statement in getFullViewingKey, no native call or file read occurs without explicit opt-in
+- [Phase 02-02]: Test strategy — real temp wallet file + native mock — avoids fs mock complexity, matches wallet-persist.test.js pattern
 
 ### Pending Todos
 
@@ -70,5 +72,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 02-01-PLAN.md — derive_viewing_key Neon function, ZIP-316 UIVK + UFVK complete
+Stopped at: Completed 02-02-PLAN.md — JS viewing-keys skill, FVK gate, 15 unit tests, lib/index wiring — Phase 2 complete
 Resume file: None
