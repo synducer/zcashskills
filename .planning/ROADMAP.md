@@ -43,7 +43,11 @@ Plans:
   1. User can export an Incoming Viewing Key (IVK) — default path; reveals only inbound transactions
   2. User can export a Full Viewing Key (FVK) — requires explicit opt-in; exposes outgoing transaction graph
   3. User can export a Unified Full Viewing Key (UFVK) encoded per ZIP-316 as a bech32m string
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Rust: derive_viewing_key Neon function (IVK + FVK/UFVK via single keyType param, no new deps)
+- [ ] 02-02-PLAN.md — JS skill: viewing-keys skill, lib/index.js wiring, unit tests
 
 ### Phase 3: Balance and Sync
 **Goal**: Users can see their current confirmed and spendable shielded balance along with transaction history
@@ -85,7 +89,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Wallet Persistence | 2/2 | Complete    | 2026-03-19 |
-| 2. Viewing Keys | 0/? | Not started | - |
+| 2. Viewing Keys | 0/2 | Not started | - |
 | 3. Balance and Sync | 0/? | Not started | - |
 | 4. Shielded Send | 0/? | Not started | - |
 | 5. Packaging and Distribution | 0/? | Not started | - |
