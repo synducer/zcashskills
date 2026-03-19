@@ -2,7 +2,7 @@ use neon::prelude::*;
 use rand::RngCore;
 use rand::rngs::OsRng;
 use zcash_address::{ToAddress, ZcashAddress};
-use zcash_keys::keys::UnifiedSpendingKey;
+use zcash_keys::keys::{UnifiedSpendingKey, UnifiedFullViewingKey};
 use zcash_protocol::consensus::{Network, NetworkType};
 use zip32::AccountId;
 use argon2::Argon2;
@@ -290,11 +290,87 @@ fn load_wallet(mut cx: FunctionContext) -> JsResult<JsObject> {
     Ok(result)
 }
 
+/// Derive a viewing key from an encrypted wallet seed.
+/// keyType: "incoming" -> UIVK (uivk1...), "full" -> UFVK (uview1...)
+/// Returns ZIP-316 bech32m encoded key string. Raw key material never returned.
+fn derive_viewing_key(mut cx: FunctionContext) -> JsResult<JsString> {
+    let passphrase       = cx.argument::<JsString>(0)?.value(&mut cx);
+    let enc_seed_hex     = cx.argument::<JsString>(1)?.value(&mut cx);
+    let salt_hex         = cx.argument::<JsString>(2)?.value(&mut cx);
+    let nonce_hex        = cx.argument::<JsString>(3)?.value(&mut cx);
+    let network_str      = cx.argument::<JsString>(4)?.value(&mut cx);
+    let key_type         = cx.argument::<JsString>(5)?.value(&mut cx);
+
+    let consensus_network = match network_str.as_str() {
+        "mainnet" => Network::MainNetwork,
+        "testnet" => Network::TestNetwork,
+        _ => return cx.throw_error("Invalid network: use 'mainnet' or 'testnet'"),
+    };
+
+    // Decode hex inputs — match + cx.throw_error pattern (NOT map_err + ?)
+    let ciphertext = match hex::decode(&enc_seed_hex) {
+        Ok(v) => v,
+        Err(e) => return cx.throw_error(format!("Invalid encryptedSeed hex: {}", e)),
+    };
+    let salt = match hex::decode(&salt_hex) {
+        Ok(v) => v,
+        Err(e) => return cx.throw_error(format!("Invalid salt hex: {}", e)),
+    };
+    let nonce_bytes = match hex::decode(&nonce_hex) {
+        Ok(v) => v,
+        Err(e) => return cx.throw_error(format!("Invalid nonce hex: {}", e)),
+    };
+
+    // Re-derive decryption key from passphrase (same Argon2id params as create_wallet)
+    let mut key = [0u8; 32];
+    if let Err(e) = Argon2::default().hash_password_into(passphrase.as_bytes(), &salt, &mut key) {
+        return cx.throw_error(format!("KDF error: {}", e));
+    }
+
+    // Decrypt seed
+    let cipher = match XChaCha20Poly1305::new_from_slice(&key) {
+        Ok(c) => c,
+        Err(_) => { key.fill(0); return cx.throw_error("Invalid key length"); }
+    };
+    let nonce = XNonce::from_slice(&nonce_bytes);
+    let mut entropy = match cipher.decrypt(nonce, ciphertext.as_ref()) {
+        Ok(p) => p,
+        Err(_) => { key.fill(0); return cx.throw_error("Decryption failed — wrong passphrase"); }
+    };
+    key.fill(0);
+
+    // Derive USK from decrypted entropy (AccountId::ZERO — same as create_wallet/load_wallet)
+    let usk = match UnifiedSpendingKey::from_seed(&consensus_network, &entropy, AccountId::ZERO) {
+        Ok(k) => k,
+        Err(e) => {
+            entropy.iter_mut().for_each(|b| *b = 0);
+            return cx.throw_error(format!("Key derivation failed: {:?}", e));
+        }
+    };
+    entropy.iter_mut().for_each(|b| *b = 0);
+
+    // Derive UFVK — unified path (NOT usk.sapling().to_full_viewing_key() — that's legacy)
+    let ufvk: UnifiedFullViewingKey = usk.to_unified_full_viewing_key();
+
+    // Encode to ZIP-316 bech32m string based on keyType
+    // "full"     -> uview1... (mainnet) — satisfies VIEW-02 + VIEW-03
+    // "incoming" -> uivk1...  (mainnet) — satisfies VIEW-01
+    // Uses Network::MainNetwork/TestNetwork which implement Parameters (NOT NetworkType)
+    let encoded = match key_type.as_str() {
+        "full"     => ufvk.encode(&consensus_network),
+        "incoming" => ufvk.to_unified_incoming_viewing_key().encode(&consensus_network),
+        _ => return cx.throw_error("Invalid keyType: use 'incoming' or 'full'"),
+    };
+
+    Ok(cx.string(&encoded))
+}
+
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
     cx.export_function("generateShieldedAddress", generate_shielded_address)?;
     cx.export_function("validateAddress", validate_address)?;
     cx.export_function("createWallet", create_wallet)?;
     cx.export_function("loadWallet", load_wallet)?;
+    cx.export_function("deriveViewingKey", derive_viewing_key)?;
     Ok(())
 }
