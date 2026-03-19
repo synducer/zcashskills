@@ -105,6 +105,17 @@ None — no external service configuration required.
 - All three VIEW requirements satisfied: VIEW-01 (IVK), VIEW-02 (FVK gate), VIEW-03 (ZIP-316 bech32m UFVK encoding)
 - Phase 3 (Chain Scanning) can now build on the viewing key primitives for lightwalletd integration
 
+## Self-Check: PASSED
+
+- FOUND: skills/viewing-keys/index.js
+- FOUND: test/unit/viewing-keys.test.js
+- FOUND: lib/index.js
+- FOUND: .planning/phases/02-viewing-keys/02-02-SUMMARY.md
+- FOUND: commit 2705aa9 (Task 1)
+- FOUND: commit c5f1b9c (Task 2)
+- All 41 tests pass (npm test)
+- Integration smoke: uivk1 prefix, uview1 prefix, FVK gate confirmed
+
 ---
 *Phase: 02-viewing-keys*
 *Completed: 2026-03-20*
