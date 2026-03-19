@@ -89,7 +89,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Wallet Persistence | 2/2 | Complete    | 2026-03-19 |
-| 2. Viewing Keys | 0/2 | Not started | - |
+| 2. Viewing Keys | 1/2 | In Progress|  |
 | 3. Balance and Sync | 0/? | Not started | - |
 | 4. Shielded Send | 0/? | Not started | - |
 | 5. Packaging and Distribution | 0/? | Not started | - |

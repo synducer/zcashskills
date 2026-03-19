@@ -5,32 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Users can generate, persist, and control a real ZCash shielded wallet through an AI agent — receiving, sending, and verifying private payments without ever exposing keys to external services.
-**Current focus:** Phase 1 — Wallet Persistence
+**Current focus:** Phase 2 — Viewing Keys
 
 ## Current Position
 
-Phase: 1 of 5 (Wallet Persistence)
-Plan: 2 of 2 in current phase (phase complete)
+Phase: 2 of 5 (Viewing Keys)
+Plan: 1 of 2 in current phase (plan 01 complete)
 Status: In progress
-Last activity: 2026-03-20 — Plan 01-02 complete (wallet-persist JS skill, unit tests, lib/index.js wiring)
+Last activity: 2026-03-20 — Plan 02-01 complete (derive_viewing_key Neon function, ZIP-316 UIVK + UFVK)
 
-Progress: [██░░░░░░░░] 20%
+Progress: [███░░░░░░░] 30%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
-- Average duration: 3.5 min
-- Total execution time: 0.12 hours
+- Total plans completed: 3
+- Average duration: 3 min
+- Total execution time: 0.15 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-wallet-persistence | 2 | 7 min | 3.5 min |
+| 02-viewing-keys | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (4 min)
+- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (2 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -52,6 +53,9 @@ Recent decisions affecting current work:
 - [01-02]: JS skill owns filesystem I/O only — all crypto delegated to Rust via native.createWallet/loadWallet
 - [01-02]: SAPLING_ACTIVATION defaults are conservative 2026 estimates; Phase 3 replaces with live lightwalletd chain-tip
 - [01-02]: mnemonic returned only from createWallet, never loadWallet — enforced structurally
+- [Phase 02-01]: UnifiedFullViewingKey::encode(&Network) for ZIP-316 UFVK — NOT legacy zcash_keys::encoding::encode_extended_full_viewing_key which produces zxviews1... (non-ZIP-316)
+- [Phase 02-01]: No new Cargo.toml deps needed — zcash_keys 0.12 with sapling feature already provides UnifiedFullViewingKey and UnifiedIncomingViewingKey
+- [Phase 02-01]: UIVK open question resolved: uivk.encode(&Network::MainNetwork) compiles correctly with public API — private render() path only in tests
 
 ### Pending Todos
 
@@ -66,5 +70,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 01-02-PLAN.md — wallet-persist JS skill, unit tests, lib/index.js wiring complete
+Stopped at: Completed 02-01-PLAN.md — derive_viewing_key Neon function, ZIP-316 UIVK + UFVK complete
 Resume file: None

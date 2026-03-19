@@ -26,9 +26,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Viewing Keys
 
-- [ ] **VIEW-01**: User can export Incoming Viewing Key (IVK) — privacy-safe default for auditors
-- [ ] **VIEW-02**: User can export Full Viewing Key (FVK) with explicit opt-in (exposes outgoing transaction graph)
-- [ ] **VIEW-03**: User can export Unified Full Viewing Key (UFVK) encoded per ZIP-316
+- [x] **VIEW-01**: User can export Incoming Viewing Key (IVK) — privacy-safe default for auditors
+- [x] **VIEW-02**: User can export Full Viewing Key (FVK) with explicit opt-in (exposes outgoing transaction graph)
+- [x] **VIEW-03**: User can export Unified Full Viewing Key (UFVK) encoded per ZIP-316
 
 ### Packaging & Distribution
 
@@ -88,9 +88,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WALL-02 | Phase 1 | Complete |
 | WALL-03 | Phase 1 | Complete |
 | WALL-04 | Phase 1 | Complete |
-| VIEW-01 | Phase 2 | Pending |
-| VIEW-02 | Phase 2 | Pending |
-| VIEW-03 | Phase 2 | Pending |
+| VIEW-01 | Phase 2 | Complete |
+| VIEW-02 | Phase 2 | Complete |
+| VIEW-03 | Phase 2 | Complete |
 | SYNC-01 | Phase 3 | Pending |
 | SYNC-02 | Phase 3 | Pending |
 | SYNC-03 | Phase 3 | Pending |
