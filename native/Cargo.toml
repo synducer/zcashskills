@@ -1,0 +1,34 @@
+[package]
+name = "zcash-skills-native"
+version = "0.1.0"
+edition = "2021"
+description = "Native ZCash cryptographic operations for zcashskills"
+license = "MIT"
+repository = "https://github.com/konradgnat/zcashskills"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# Neon for Node.js integration
+neon = { version = "1.0", default-features = false, features = ["napi-6"] }
+
+# ZCash cryptographic libraries
+zcash_keys = "0.2"
+zcash_address = "0.3"
+
+# Random number generation
+rand = "0.8"
+
+# Additional utilities
+hex = "0.4"
+
+[build-dependencies]
+neon-build = "1.0"
+
+# Optimization for release builds
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
