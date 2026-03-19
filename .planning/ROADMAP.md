@@ -29,7 +29,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. User can unlock an existing wallet file with their passphrase and get a ready-to-use wallet handle
   3. Wallet file on disk is encrypted (Argon2id KDF + XChaCha20-Poly1305); plaintext seed never appears in the file or JS memory
   4. Wallet file records birthday block height so subsequent scans do not replay the full chain
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Rust crypto: create_wallet and load_wallet Neon functions (bip39 + argon2 + chacha20poly1305)
+- [ ] 01-02-PLAN.md — JS skill: wallet-persist skill, constants, lib/index.js wiring, unit tests
 
 ### Phase 2: Viewing Keys
 **Goal**: Users can export privacy-appropriate viewing keys for selective disclosure and compliance auditing
@@ -80,7 +84,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Wallet Persistence | 0/? | Not started | - |
+| 1. Wallet Persistence | 0/2 | Not started | - |
 | 2. Viewing Keys | 0/? | Not started | - |
 | 3. Balance and Sync | 0/? | Not started | - |
 | 4. Shielded Send | 0/? | Not started | - |
