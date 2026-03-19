@@ -10,27 +10,27 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 1 of 5 (Wallet Persistence)
-Plan: 0 of ? in current phase
-Status: Ready to plan
-Last activity: 2026-03-20 — Roadmap created, traceability updated
+Plan: 1 of ? in current phase
+Status: In progress
+Last activity: 2026-03-20 — Plan 01-01 complete (createWallet + loadWallet Neon functions)
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 10%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0
-- Average duration: —
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 3 min
+- Total execution time: 0.05 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-wallet-persistence | 1 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: none yet
+- Last 5 plans: 01-01 (3 min)
 - Trend: —
 
 *Updated after each plan completion*
@@ -46,6 +46,9 @@ Recent decisions affecting current work:
 - [Project]: Sapling-only for v1 — no Orchard; wider anonymity set and simpler implementation
 - [Project]: lightwalletd light client only — no full node requirement
 - [Project]: Single account (AccountId::ZERO) for v1 — simplicity over multi-account flexibility
+- [01-01]: Neon error pattern: match + cx.throw_error (not map_err + ?) — Neon 0.10.x cx.throw_error returns JsResult<T>, not Throw
+- [01-01]: XChaCha20Poly1305 with XNonce (24 bytes) per RESEARCH.md Pitfall 3
+- [01-01]: hash_password_into with raw &[u8] salt (not SaltString) per RESEARCH.md Pitfall 2
 
 ### Pending Todos
 
@@ -60,5 +63,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Roadmap created, STATE.md initialized — ready to run /gsd:plan-phase 1
+Stopped at: Completed 01-01-PLAN.md — createWallet and loadWallet Neon functions implemented and verified
 Resume file: None

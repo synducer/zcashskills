@@ -9,10 +9,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Wallet Management
 
-- [ ] **WALL-01**: User can create a new wallet with encrypted seed persistence (Argon2id KDF + XChaCha20-Poly1305 AEAD, seed encrypted inside Rust before crossing FFI boundary)
-- [ ] **WALL-02**: User can load/unlock an existing wallet file with passphrase decryption
-- [ ] **WALL-03**: Wallet stores birthday block height at creation time for efficient chain scanning
-- [ ] **WALL-04**: User can generate BIP-39 24-word mnemonic backup phrase for seed recovery
+- [x] **WALL-01**: User can create a new wallet with encrypted seed persistence (Argon2id KDF + XChaCha20-Poly1305 AEAD, seed encrypted inside Rust before crossing FFI boundary)
+- [x] **WALL-02**: User can load/unlock an existing wallet file with passphrase decryption
+- [x] **WALL-03**: Wallet stores birthday block height at creation time for efficient chain scanning
+- [x] **WALL-04**: User can generate BIP-39 24-word mnemonic backup phrase for seed recovery
 
 ### Balance & Sync
 
@@ -84,10 +84,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| WALL-01 | Phase 1 | Pending |
-| WALL-02 | Phase 1 | Pending |
-| WALL-03 | Phase 1 | Pending |
-| WALL-04 | Phase 1 | Pending |
+| WALL-01 | Phase 1 | Complete |
+| WALL-02 | Phase 1 | Complete |
+| WALL-03 | Phase 1 | Complete |
+| WALL-04 | Phase 1 | Complete |
 | VIEW-01 | Phase 2 | Pending |
 | VIEW-02 | Phase 2 | Pending |
 | VIEW-03 | Phase 2 | Pending |
