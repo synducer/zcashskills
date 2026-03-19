@@ -12,7 +12,7 @@ Starting from a working native module (address generation, validation, ZIP-321 p
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Wallet Persistence** - Users can create and unlock encrypted wallets with seed persistence
+- [x] **Phase 1: Wallet Persistence** - Users can create and unlock encrypted wallets with seed persistence (completed 2026-03-19)
 - [ ] **Phase 2: Viewing Keys** - Users can export IVK, FVK, and UFVK for selective disclosure and auditing
 - [ ] **Phase 3: Balance and Sync** - Users can query confirmed and unconfirmed shielded balances via lightwalletd
 - [ ] **Phase 4: Shielded Send** - Users can send z-to-z shielded payments with encrypted memo fields
@@ -84,7 +84,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Wallet Persistence | 1/2 | In Progress|  |
+| 1. Wallet Persistence | 2/2 | Complete   | 2026-03-19 |
 | 2. Viewing Keys | 0/? | Not started | - |
 | 3. Balance and Sync | 0/? | Not started | - |
 | 4. Shielded Send | 0/? | Not started | - |
