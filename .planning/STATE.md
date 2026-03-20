@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 3 of 5 (Balance and Sync)
-Plan: 2 of N in current phase (plan 03-02 complete)
-Status: Phase 3 in progress — JS gRPC client complete, Rust scan layer (Plan 01) also complete
-Last activity: 2026-03-20 — Plan 03-02 complete (gRPC client, proto files, fetchBlocksAsProtoBytes returning Buffer[])
+Plan: 1 of 4 in current phase complete (03-01-PLAN.md complete — scan_blocks Neon function)
+Status: Phase 3 in progress — Plan 01 complete (Rust scan_blocks), Plan 02 complete (gRPC client), Plans 03+04 pending
+Last activity: 2026-03-20 — Plan 03-01 complete (scan_blocks Neon function, zcash_client_backend 0.21, Sapling note decryption)
 
 Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 3 min
-- Total execution time: 0.2 hours
+- Total plans completed: 5
+- Average duration: 4 min
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
@@ -29,11 +29,13 @@ Progress: [█████░░░░░] 50%
 |-------|-------|-------|----------|
 | 01-wallet-persistence | 2 | 7 min | 3.5 min |
 | 02-viewing-keys | 2 | 5 min | 2.5 min |
-| 03-balance-and-sync | 2 (so far) | 2+ min | ~2 min |
+| 03-balance-and-sync | 3 (so far) | 16+ min | ~5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (2 min), 02-02 (3 min), 03-02 (2 min)
-- Trend: stable
+- Last 5 plans: 01-02 (4 min), 02-01 (2 min), 02-02 (3 min), 03-02 (2 min), 03-01 (14 min)
+- Trend: 03-01 longer due to API discovery + first zcash_client_backend integration
+
+*Updated after each plan completion*
 
 *Updated after each plan completion*
 
@@ -61,6 +63,11 @@ Recent decisions affecting current work:
 - [Phase 02-02]: Test strategy — real temp wallet file + native mock — avoids fs mock complexity, matches wallet-persist.test.js pattern
 - [Phase 03-02]: protobufjs re-encoding: grpc-js deserializes CompactBlock to JS objects; re-encode via protobufjs encode().finish() so Rust prost receives raw bytes
 - [Phase 03-02]: keepCase:true in proto-loader preserves snake_case field names matching Rust prost wire format
+- [Phase 03-01]: ScannedBlock.transactions() is correct method name (not wallet_txs()); confirmed from zcash_client_backend-0.21.2 source
+- [Phase 03-01]: Note value chain: output.note().value().inner() — sapling::NoteValue.inner() gives u64; NOT u64::from(Zatoshis) which is different type
+- [Phase 03-01]: TypedArray trait must be imported explicitly (use neon::types::buffer::TypedArray) for JsBuffer.as_slice() in napi-6 mode
+- [Phase 03-01]: prost added directly to Cargo.toml for Message trait scope; same version (0.14) as zcash_client_backend transitive dep — no conflict
+- [Phase 03-01]: npm run build: cargo build --release --manifest-path native/Cargo.toml && cp native/index.node prebuilds/darwin-arm64/zcash-native.node
 
 ### Pending Todos
 
@@ -75,5 +82,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 03-02-PLAN.md — gRPC client module, proto files, fetchBlocksAsProtoBytes returning Buffer[] — Phase 3 Plan 02 complete
+Stopped at: Completed 03-01-PLAN.md — scan_blocks Neon function, zcash_client_backend 0.21, Sapling note decryption via scan_block API
 Resume file: None

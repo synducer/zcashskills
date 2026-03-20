@@ -17,7 +17,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Balance & Sync
 
 - [x] **SYNC-01**: User can query shielded balance via lightwalletd compact block scanning (note decryption in Rust using IVK)
-- [ ] **SYNC-02**: Balance display shows both total and spendable amounts
+- [x] **SYNC-02**: Balance display shows both total and spendable amounts
 - [ ] **SYNC-03**: User can view transaction history with memos
 
 ### Payments
@@ -92,7 +92,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VIEW-02 | Phase 2 | Complete |
 | VIEW-03 | Phase 2 | Complete |
 | SYNC-01 | Phase 3 | Complete |
-| SYNC-02 | Phase 3 | Pending |
+| SYNC-02 | Phase 3 | Complete |
 | SYNC-03 | Phase 3 | Pending |
 | PAY-01 | Phase 4 | Pending |
 | PKG-01 | Phase 5 | Pending |
