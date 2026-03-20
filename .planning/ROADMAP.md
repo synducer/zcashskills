@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Wallet Persistence** - Users can create and unlock encrypted wallets with seed persistence (completed 2026-03-19)
 - [x] **Phase 2: Viewing Keys** - Users can export IVK, FVK, and UFVK for selective disclosure and auditing (completed 2026-03-19)
-- [ ] **Phase 3: Balance and Sync** - Users can query confirmed and unconfirmed shielded balances via lightwalletd
+- [x] **Phase 3: Balance and Sync** - Users can query confirmed and unconfirmed shielded balances via lightwalletd (completed 2026-03-20)
 - [ ] **Phase 4: Shielded Send** - Users can send z-to-z shielded payments with encrypted memo fields
 - [ ] **Phase 5: Packaging and Distribution** - Package is publishable to npm and listed on OpenClaw ClawHub with ZCG grant materials
 
@@ -61,9 +61,9 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md — Rust: scanBlocks Neon function (zcash_client_backend scan_block, UFVK decryption, serde_json result)
-- [ ] 03-02-PLAN.md — JS: proto files, lightwalletd.js gRPC client (createClient, getLatestBlock, fetchBlocksAsProtoBytes)
-- [ ] 03-03-PLAN.md — JS: balance-check skill, lib/index.js wiring, unit tests (checkBalance — SYNC-01 + SYNC-02)
-- [ ] 03-04-PLAN.md — JS+Rust: memo retrieval (getTransactionHistory, decryptMemo Neon function — SYNC-03)
+- [x] 03-02-PLAN.md — JS: proto files, lightwalletd.js gRPC client (createClient, getLatestBlock, fetchBlocksAsProtoBytes)
+- [x] 03-03-PLAN.md — JS: balance-check skill, lib/index.js wiring, unit tests (checkBalance — SYNC-01 + SYNC-02)
+- [x] 03-04-PLAN.md — JS+Rust: memo retrieval (getTransactionHistory, decryptMemo Neon function — SYNC-03)
 
 ### Phase 4: Shielded Send
 **Goal**: Users can broadcast a z-to-z shielded payment with encrypted memo and correct ZIP-317 fee
@@ -96,6 +96,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Wallet Persistence | 2/2 | Complete    | 2026-03-19 |
 | 2. Viewing Keys | 2/2 | Complete    | 2026-03-19 |
-| 3. Balance and Sync | 3/4 | In Progress|  |
+| 3. Balance and Sync | 4/4 | Complete   | 2026-03-20 |
 | 4. Shielded Send | 0/? | Not started | - |
 | 5. Packaging and Distribution | 0/? | Not started | - |

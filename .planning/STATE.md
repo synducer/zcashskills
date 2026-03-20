@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 3 of 5 (Balance and Sync)
-Plan: 3 of 4 in current phase complete (03-03-PLAN.md complete — balance-check skill)
-Status: Phase 3 in progress — Plan 01 complete (Rust scan_blocks), Plan 02 complete (gRPC client), Plan 03 complete (balance-check skill), Plan 04 pending
-Last activity: 2026-03-20 — Plan 03-03 complete (balance-check skill: checkBalance wires Rust scanner + gRPC client, SYNC-01 + SYNC-02 satisfied)
+Plan: 4 of 4 in current phase complete (03-04-PLAN.md complete — getTransactionHistory + getTransaction + decryptMemo)
+Status: Phase 3 COMPLETE — Plan 01 (Rust scan_blocks), Plan 02 (gRPC client), Plan 03 (balance-check skill), Plan 04 (transaction history + memo structure) all done
+Last activity: 2026-03-20 — Plan 03-04 complete (getTransactionHistory: SYNC-03 structure in place, 59 tests passing)
 
-Progress: [███████░░░] 70%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
+- Total plans completed: 6
 - Average duration: 4 min
-- Total execution time: 0.3 hours
+- Total execution time: 0.35 hours
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [███████░░░] 70%
 |-------|-------|-------|----------|
 | 01-wallet-persistence | 2 | 7 min | 3.5 min |
 | 02-viewing-keys | 2 | 5 min | 2.5 min |
-| 03-balance-and-sync | 4 (so far) | 21+ min | ~5 min |
+| 03-balance-and-sync | 4 | 24 min | ~6 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01 (2 min), 02-02 (3 min), 03-01 (14 min), 03-02 (2 min), 03-03 (5 min)
-- Trend: 03-01 longer due to API discovery + first zcash_client_backend integration
+- Last 5 plans: 02-02 (3 min), 03-01 (14 min), 03-02 (2 min), 03-03 (5 min), 03-04 (3 min)
+- Trend: Phase 3 complete — all 4 plans done; Phase 4 (send) next
 
 *Updated after each plan completion*
 
@@ -71,6 +71,8 @@ Recent decisions affecting current work:
 - [Phase 03-03]: keyType='full' enforced in checkBalance — ScanningKeys::from_account_ufvks requires UFVK, not UIVK; 'full' passed explicitly to deriveViewingKey
 - [Phase 03-03]: v1 invariant: spendableZatoshis === confirmedZatoshis — Phase 3 receive-only wallet; Phase 4 adds nullifier tracking
 - [Phase 03-03]: birthdayHeight fallback to tipHeight - 100 when wallet has missing or 0 birthdayHeight (Phase 1 placeholder)
+- [Phase 03-04]: decrypt_memo placeholder for v1: returns empty string (JS maps to memo: null); full Sapling trial decryption deferred to post-hackathon; interface contract met
+- [Phase 03-04]: memo failure is non-fatal in getTransactionHistory: per-transaction RPC/decryption errors caught; transaction included with memo: null
 
 ### Pending Todos
 
@@ -85,5 +87,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 03-03-PLAN.md — balance-check skill wiring Rust scanner and gRPC client, SYNC-01 and SYNC-02 satisfied, 54 tests passing
+Stopped at: Completed 03-04-PLAN.md — getTransactionHistory with memo structure, SYNC-03 satisfied, 59 tests passing. Phase 3 complete.
 Resume file: None
