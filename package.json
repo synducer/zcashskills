@@ -28,7 +28,7 @@
     "test": "jest",
     "test:unit": "jest test/unit",
     "test:integration": "jest test/integration",
-    "build": "neon build --release",
+    "build": "cargo build --release --manifest-path native/Cargo.toml && cp native/index.node prebuilds/darwin-arm64/zcash-native.node",
     "install": "node scripts/install.js",
     "prebuild": "prebuildify --napi --strip",
     "rebuild": "npm run build",

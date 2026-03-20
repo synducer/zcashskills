@@ -8,6 +8,10 @@ use zip32::AccountId;
 use argon2::Argon2;
 use bip39::Mnemonic;
 use chacha20poly1305::{XChaCha20Poly1305, XNonce, aead::{Aead, KeyInit}};
+use zcash_client_backend::proto::compact_formats::CompactBlock;
+use zcash_client_backend::scanning::{ScanningKeys, Nullifiers, scan_block};
+use neon::types::buffer::TypedArray;
+use prost::Message;
 
 /// Generate a new ZCash Sapling shielded address.
 fn generate_shielded_address(mut cx: FunctionContext) -> JsResult<JsObject> {
@@ -365,6 +369,97 @@ fn derive_viewing_key(mut cx: FunctionContext) -> JsResult<JsString> {
     Ok(cx.string(&encoded))
 }
 
+/// Scan compact blocks for received Sapling notes using the wallet's UFVK.
+///
+/// Arguments:
+///   0: ufvk_str (JsString) — ZIP-316 bech32m UFVK string (uview1... mainnet)
+///   1: network_str (JsString) — "mainnet" or "testnet"
+///   2: blocks_arg (JsArray) — Array of JsBuffer, each containing one CompactBlock as protobuf bytes
+///
+/// Returns JsObject { confirmedZatoshis: string, transactionsJson: string }
+/// confirmedZatoshis is a stringified u64 (avoids Number precision loss for large balances)
+/// transactionsJson is a JSON array string: [{ txid, blockHeight, valueZatoshis }]
+fn scan_blocks(mut cx: FunctionContext) -> JsResult<JsObject> {
+    let ufvk_str    = cx.argument::<JsString>(0)?.value(&mut cx);
+    let network_str = cx.argument::<JsString>(1)?.value(&mut cx);
+    let blocks_arg  = cx.argument::<JsArray>(2)?;
+
+    let consensus_network = match network_str.as_str() {
+        "mainnet" => Network::MainNetwork,
+        "testnet" => Network::TestNetwork,
+        _ => return cx.throw_error("Invalid network: use 'mainnet' or 'testnet'"),
+    };
+
+    // Decode UFVK from ZIP-316 bech32m string
+    let ufvk = match UnifiedFullViewingKey::decode(&consensus_network, &ufvk_str) {
+        Ok(k) => k,
+        Err(e) => return cx.throw_error(format!("Invalid UFVK: {}", e)),
+    };
+
+    // Build ScanningKeys from UFVK (AccountId::ZERO — single account, v1)
+    let scanning_keys = ScanningKeys::from_account_ufvks(
+        [(AccountId::ZERO, ufvk)]
+    );
+
+    // No spend nullifiers to track in Phase 3 (receive-only wallet)
+    let nullifiers = Nullifiers::empty();
+
+    // Process each compact block buffer
+    let block_count = blocks_arg.len(&mut cx);
+    let mut total_zatoshis: u64 = 0;
+    let mut transactions: Vec<serde_json::Value> = Vec::new();
+
+    for i in 0..block_count {
+        let buf: Handle<JsBuffer> = match blocks_arg.get(&mut cx, i) {
+            Ok(b) => b,
+            Err(_) => return cx.throw_error(format!("Could not read block buffer at index {}", i)),
+        };
+        let bytes = buf.as_slice(&cx).to_vec();
+
+        let compact_block = match CompactBlock::decode(bytes.as_slice()) {
+            Ok(b) => b,
+            Err(e) => return cx.throw_error(format!("Block decode error at index {}: {}", i, e)),
+        };
+
+        let block_height = compact_block.height;
+
+        let scanned = match scan_block(
+            &consensus_network,
+            compact_block,
+            &scanning_keys,
+            &nullifiers,
+            None,  // prior_block_metadata: None is safe for stateless single-pass scan
+        ) {
+            Ok(s) => s,
+            Err(e) => return cx.throw_error(format!("Scan error at block {}: {:?}", block_height, e)),
+        };
+
+        // Iterate received wallet transactions
+        for wtx in scanned.transactions() {
+            for output in wtx.sapling_outputs() {
+                // Count all outputs — receive-only wallet in Phase 3 (no change from sends)
+                // output.is_change() check deferred to Phase 4 when send is added
+                let value_zatoshis: u64 = output.note().value().inner();
+                total_zatoshis = total_zatoshis.saturating_add(value_zatoshis);
+                transactions.push(serde_json::json!({
+                    "txid": hex::encode(wtx.txid().as_ref()),
+                    "blockHeight": block_height,
+                    "valueZatoshis": value_zatoshis,
+                }));
+            }
+        }
+    }
+
+    // Return result — zatoshi amounts as strings to avoid JS Number precision loss
+    let result = cx.empty_object();
+    let js_balance = cx.string(total_zatoshis.to_string());
+    result.set(&mut cx, "confirmedZatoshis", js_balance)?;
+    let txns_json = serde_json::to_string(&transactions).unwrap_or_else(|_| "[]".to_string());
+    let js_txns = cx.string(txns_json);
+    result.set(&mut cx, "transactionsJson", js_txns)?;
+    Ok(result)
+}
+
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
     cx.export_function("generateShieldedAddress", generate_shielded_address)?;
@@ -372,5 +467,6 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
     cx.export_function("createWallet", create_wallet)?;
     cx.export_function("loadWallet", load_wallet)?;
     cx.export_function("deriveViewingKey", derive_viewing_key)?;
+    cx.export_function("scanBlocks", scan_blocks)?;
     Ok(())
 }
