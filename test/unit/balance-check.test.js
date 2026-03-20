@@ -7,6 +7,7 @@ const os = require('os');
 jest.mock('../../lib/native-loader', () => ({
   deriveViewingKey: jest.fn(),
   scanBlocks: jest.fn(),
+  decryptMemo: jest.fn(),
 }));
 
 // Mock lightwalletd BEFORE requiring the skill
@@ -14,6 +15,7 @@ jest.mock('../../lib/lightwalletd', () => ({
   createClient: jest.fn(),
   getLatestBlock: jest.fn(),
   fetchBlocksAsProtoBytes: jest.fn(),
+  getTransaction: jest.fn(),
 }));
 
 // Mock fs BEFORE requiring the skill
@@ -22,7 +24,7 @@ jest.mock('fs', () => ({
 }));
 
 const native = require('../../lib/native-loader');
-const { createClient, getLatestBlock, fetchBlocksAsProtoBytes } = require('../../lib/lightwalletd');
+const { createClient, getLatestBlock, fetchBlocksAsProtoBytes, getTransaction } = require('../../lib/lightwalletd');
 const fs = require('fs');
 const { checkBalance } = require('../../skills/balance-check');
 
@@ -174,5 +176,85 @@ describe('balance-check skill', () => {
       expect(checkBalance.meta.name).toBe('balance-check');
       expect(checkBalance.meta.version).toBe('1.0.0');
     });
+  });
+});
+
+describe('getTransactionHistory', () => {
+  const { getTransactionHistory } = require('../../skills/balance-check');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const mockClient = {};
+    createClient.mockReturnValue(mockClient);
+    getLatestBlock.mockResolvedValue(2500100);
+    fetchBlocksAsProtoBytes.mockResolvedValue([Buffer.from('mockblock1'), Buffer.from('mockblock2')]);
+    native.deriveViewingKey.mockReturnValue('uview1mockufvkstring');
+    getTransaction.mockResolvedValue(Buffer.from('deadbeef', 'hex'));
+    native.decryptMemo.mockReturnValue('Payment for invoice #42');
+    native.scanBlocks.mockReturnValue({
+      confirmedZatoshis: '500000000',
+      transactionsJson: JSON.stringify([
+        { txid: 'abc123', blockHeight: 2500050, valueZatoshis: 500000000 }
+      ]),
+    });
+    const fs = require('fs');
+    fs.readFileSync.mockReturnValue(JSON.stringify({
+      version: 1,
+      network: 'mainnet',
+      address: 'zs1testaddress',
+      encryptedSeed: 'aabbcc',
+      salt: 'ddeeff',
+      nonce: '112233',
+      birthdayHeight: 2500000,
+    }));
+  });
+
+  test('returns transactions with memo fields', async () => {
+    const result = await getTransactionHistory({
+      lightwalletdUrl: 'zec.rocks:443',
+      passphrase: 'testpass',
+    });
+    expect(result.success).toBe(true);
+    expect(result.transactions).toHaveLength(1);
+    expect(result.transactions[0].txid).toBe('abc123');
+    expect(result.transactions[0].blockHeight).toBe(2500050);
+    expect(result.transactions[0].valueZatoshis).toBe('500000000');
+    expect(result.transactions[0].valueZEC).toBe('5.00000000');
+    expect(result.transactions[0].memo).toBe('Payment for invoice #42');
+  });
+
+  test('returns memo: null when decryptMemo returns empty string', async () => {
+    native.decryptMemo.mockReturnValue('');
+    const result = await getTransactionHistory({
+      lightwalletdUrl: 'zec.rocks:443',
+      passphrase: 'testpass',
+    });
+    expect(result.transactions[0].memo).toBeNull();
+  });
+
+  test('returns memo: null when getTransaction throws (non-fatal)', async () => {
+    getTransaction.mockRejectedValue(new Error('Transaction not found'));
+    const result = await getTransactionHistory({
+      lightwalletdUrl: 'zec.rocks:443',
+      passphrase: 'testpass',
+    });
+    expect(result.success).toBe(true); // Non-fatal
+    expect(result.transactions[0].memo).toBeNull();
+  });
+
+  test('returns empty transactions array when no notes found', async () => {
+    native.scanBlocks.mockReturnValue({ confirmedZatoshis: '0', transactionsJson: '[]' });
+    const result = await getTransactionHistory({
+      lightwalletdUrl: 'zec.rocks:443',
+      passphrase: 'testpass',
+    });
+    expect(result.success).toBe(true);
+    expect(result.transactions).toHaveLength(0);
+  });
+
+  test('returns error when lightwalletdUrl missing', async () => {
+    const result = await getTransactionHistory({ passphrase: 'pass' });
+    expect(result.success).toBe(false);
+    expect(result.code).toBe('HISTORY_ERROR');
   });
 });

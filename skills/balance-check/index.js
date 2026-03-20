@@ -143,5 +143,131 @@ checkBalance.meta = {
   requirements: ['SYNC-01', 'SYNC-02']
 };
 
+/**
+ * Get transaction history with memo fields for a ZCash wallet.
+ * Runs compact block scanning to find received transactions, then
+ * fetches full transaction bytes and decrypts memos for each one.
+ *
+ * SYNC-03: Returns transaction history with memo field contents
+ *
+ * @param {Object} params - Same as checkBalance params
+ * @returns {Promise<Object>} { success, transactions: [{ txid, blockHeight, valueZatoshis, valueZEC, memo }], blockHeight }
+ */
+async function getTransactionHistory({
+  lightwalletdUrl,
+  passphrase,
+  walletPath = DEFAULT_WALLET_PATH,
+  network = 'mainnet',
+  insecure = false
+} = {}) {
+  try {
+    if (!lightwalletdUrl) throw new Error('lightwalletdUrl is required');
+    if (!passphrase) throw new Error('Passphrase is required');
+
+    if (typeof native.deriveViewingKey !== 'function') {
+      throw new Error('native.deriveViewingKey not found — rebuild native module');
+    }
+    if (typeof native.scanBlocks !== 'function') {
+      throw new Error('native.scanBlocks not found — rebuild native module');
+    }
+    if (typeof native.decryptMemo !== 'function') {
+      throw new Error('native.decryptMemo not found — rebuild native module');
+    }
+
+    // Read wallet file
+    let walletJson;
+    try {
+      walletJson = JSON.parse(fs.readFileSync(walletPath, 'utf8'));
+    } catch (fsErr) {
+      throw new Error(`Cannot read wallet file at ${walletPath}: ${fsErr.message}`);
+    }
+    const requiredFields = ['encryptedSeed', 'salt', 'nonce', 'network'];
+    for (const field of requiredFields) {
+      if (!walletJson[field]) throw new Error(`Wallet file missing required field: ${field}`);
+    }
+
+    const resolvedNetwork = walletJson.network || network;
+
+    // Derive UFVK (required for both scanning and memo decryption)
+    const ufvk = native.deriveViewingKey(
+      passphrase,
+      walletJson.encryptedSeed,
+      walletJson.salt,
+      walletJson.nonce,
+      resolvedNetwork,
+      'full'
+    );
+
+    // Connect and get tip height
+    const { createClient: _createClient, getLatestBlock: _getLatestBlock,
+            fetchBlocksAsProtoBytes: _fetchBlocksAsProtoBytes,
+            getTransaction: _getTransaction } = require('../../lib/lightwalletd');
+
+    const client = _createClient(lightwalletdUrl, { insecure });
+    const tipHeight = await _getLatestBlock(client);
+
+    let birthdayHeight = walletJson.birthdayHeight;
+    if (!birthdayHeight || birthdayHeight <= 0) {
+      birthdayHeight = Math.max(0, tipHeight - 100);
+    }
+
+    // Scan compact blocks — get txids and values
+    const blockBuffers = await _fetchBlocksAsProtoBytes(client, birthdayHeight, tipHeight);
+    const scanResult = native.scanBlocks(ufvk, resolvedNetwork, blockBuffers);
+    const rawTransactions = JSON.parse(scanResult.transactionsJson || '[]');
+
+    // For each found transaction, fetch full tx bytes and decrypt memo
+    const ZEC_PER_ZATOSHI = 100_000_000;
+    const transactions = [];
+
+    for (const rawTx of rawTransactions) {
+      let memo = null;
+      try {
+        const rawTxBytes = await _getTransaction(client, rawTx.txid);
+        const rawTxHex = rawTxBytes.toString('hex');
+        const decryptedMemo = native.decryptMemo(rawTxHex, ufvk, resolvedNetwork);
+        // Empty string from Rust means no memo or failed decryption — return null
+        memo = decryptedMemo && decryptedMemo.trim().length > 0 ? decryptedMemo.trim() : null;
+      } catch (_memoErr) {
+        // Memo decryption failure is non-fatal — transaction is still included
+        memo = null;
+      }
+
+      transactions.push({
+        txid: rawTx.txid,
+        blockHeight: rawTx.blockHeight,
+        valueZatoshis: String(rawTx.valueZatoshis),
+        valueZEC: (rawTx.valueZatoshis / ZEC_PER_ZATOSHI).toFixed(8),
+        memo,
+      });
+    }
+
+    return {
+      success: true,
+      transactions,
+      blockHeight: tipHeight,
+      scannedBlocks: blockBuffers.length,
+      network: resolvedNetwork,
+    };
+
+  } catch (err) {
+    return {
+      success: false,
+      error: err.message,
+      code: 'HISTORY_ERROR'
+    };
+  }
+}
+
+getTransactionHistory.meta = {
+  name: 'balance-check-history',
+  description: 'Get ZCash transaction history with memo fields via lightwalletd compact block scanning',
+  version: '1.0.0',
+  execution: 'local+network',
+  privacy: 'shielded-only',
+  requirements: ['SYNC-03']
+};
+
 module.exports = checkBalance;
 module.exports.checkBalance = checkBalance;
+module.exports.getTransactionHistory = getTransactionHistory;
