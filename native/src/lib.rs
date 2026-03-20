@@ -460,6 +460,55 @@ fn scan_blocks(mut cx: FunctionContext) -> JsResult<JsObject> {
     Ok(result)
 }
 
+/// Decrypt the memo field from a raw transaction using the wallet's UFVK.
+/// Returns the memo as a string (trimmed of trailing nulls), or empty string if no memo.
+///
+/// Arguments:
+///   0: raw_tx_hex (JsString) — full raw transaction bytes as hex string
+///   1: ufvk_str (JsString) — ZIP-316 bech32m UFVK string (uview1...)
+///   2: network_str (JsString) — "mainnet" or "testnet"
+///
+/// Returns JsString — memo text, or empty string if no decryptable memo
+///
+/// NOTE: Placeholder implementation for v1. Returns empty string (no memo).
+/// The JS skill handles null memos gracefully — memo: null in transaction output.
+/// Full Sapling memo decryption requires the sapling crate trial-decrypt API
+/// which needs additional dependency investigation beyond this hackathon scope.
+fn decrypt_memo(mut cx: FunctionContext) -> JsResult<JsString> {
+    let raw_tx_hex  = cx.argument::<JsString>(0)?.value(&mut cx);
+    let ufvk_str    = cx.argument::<JsString>(1)?.value(&mut cx);
+    let network_str = cx.argument::<JsString>(2)?.value(&mut cx);
+
+    let consensus_network = match network_str.as_str() {
+        "mainnet" => Network::MainNetwork,
+        "testnet" => Network::TestNetwork,
+        _ => return cx.throw_error("Invalid network"),
+    };
+
+    let raw_tx_bytes = match hex::decode(&raw_tx_hex) {
+        Ok(b) => b,
+        Err(e) => return cx.throw_error(format!("Invalid transaction hex: {}", e)),
+    };
+
+    let ufvk = match UnifiedFullViewingKey::decode(&consensus_network, &ufvk_str) {
+        Ok(k) => k,
+        Err(e) => return cx.throw_error(format!("Invalid UFVK: {}", e)),
+    };
+
+    // Extract the Sapling incoming viewing key from the UFVK
+    // The IVK is needed for trial decryption of Sapling note ciphertext
+    let sapling_ivk = match ufvk.sapling() {
+        Some(fvk) => fvk.to_ivk(zip32::Scope::External),
+        None => return Ok(cx.string("")), // No Sapling key — no memo possible
+    };
+
+    // Placeholder: return empty string for v1.
+    // The JS skill maps empty string -> memo: null in the transaction result.
+    // TODO: implement full Sapling trial decryption using raw_tx_bytes + sapling_ivk.
+    let _ = (raw_tx_bytes, sapling_ivk); // suppress unused warnings
+    Ok(cx.string(""))
+}
+
 #[neon::main]
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
     cx.export_function("generateShieldedAddress", generate_shielded_address)?;
@@ -468,5 +517,6 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
     cx.export_function("loadWallet", load_wallet)?;
     cx.export_function("deriveViewingKey", derive_viewing_key)?;
     cx.export_function("scanBlocks", scan_blocks)?;
+    cx.export_function("decryptMemo", decrypt_memo)?;
     Ok(())
 }
