@@ -4,6 +4,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+## Demo
+
+[![ZCashSkills Demo](https://img.youtube.com/vi/GYayVBv8bWI/maxresdefault.jpg)](https://www.youtube.com/watch?v=GYayVBv8bWI)
+
 ## What This Is
 
 ZCashSkills is the first ZCash wallet SDK designed for AI agents (OpenClaw, LangChain). It wraps the official [librustzcash](https://github.com/zcash/librustzcash) cryptographic library into a native Node.js module via Neon bindings, providing shielded wallet operations with full transaction support.
