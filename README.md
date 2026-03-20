@@ -1,305 +1,266 @@
 # ZCash Skills
 
-> Privacy-preserving ZCash skills for AI agents with local cryptographic operations
+> Privacy-preserving ZCash wallet SDK for AI agents — powered by librustzcash
 
-[![npm version](https://badge.fury.io/js/zcashskills.svg)](https://badge.fury.io/js/zcashskills)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js CI](https://github.com/konradgnat/zcashskills/workflows/Node.js%20CI/badge.svg)](https://github.com/konradgnat/zcashskills/actions)
 
-## 🎯 Overview
+## What This Is
 
-ZCashSkills is the first executable skills repository for ZCash AI agents, bringing privacy-preserving cryptocurrency operations directly to your agent's server with zero external dependencies.
+ZCashSkills is the first ZCash wallet SDK designed for AI agents (OpenClaw, LangChain). It wraps the official [librustzcash](https://github.com/zcash/librustzcash) cryptographic library into a native Node.js module via Neon bindings, providing shielded wallet operations with **zero external network calls** for all cryptographic operations.
 
-**Key Features:**
-- 🔐 **Privacy-First**: Shielded addresses by default
-- ⚡ **Local Execution**: No external services required
-- 🤖 **AI-Native**: Designed for agent consumption
-- 🌍 **Cross-Platform**: Pre-compiled binaries for all major platforms
-- 🔒 **Secure**: Uses official librustzcash cryptography
+All private key operations happen inside Rust — seeds are encrypted before crossing the FFI boundary and never appear in JavaScript memory.
 
-## 🚀 Quick Start
+## Features
 
-### Installation
-
-```bash
-npm install zcashskills
-```
-
-### Basic Usage
-
-```javascript
-const zcashSkills = require('zcashskills');
-
-// Generate a private ZCash address
-const result = await zcashSkills.generateAddress({ network: 'testnet' });
-console.log(result.address);
-// Output: ztestsapling1abc123def456ghi789...
-
-// Create a payment URI
-const uri = await zcashSkills.createPaymentUri({
-  address: result.address,
-  amount: 0.001,
-  memo: 'Coffee payment'
-});
-console.log(uri.uri);
-// Output: zcash:ztestsapling1...?amount=0.001&memo=Coffee%20payment
-```
-
-## 📋 Available Skills
-
-### Core Skills
-
-| Skill | Description | Status |
+| Skill | What It Does | Status |
 |-------|-------------|--------|
-| `generate-address` | Generate ZCash shielded addresses locally | ✅ MVP |
-| `validate-address` | Validate ZCash address format and network | ✅ MVP |
-| `create-payment-uri` | Create ZIP-321 payment URIs | ✅ MVP |
-| `parse-payment-uri` | Parse ZIP-321 URIs into structured data | ✅ MVP |
+| **generate-address** | Generate real ZCash shielded addresses (mainnet/testnet) | ✅ Working |
+| **validate-address** | Validate address format, detect network and type | ✅ Working |
+| **create-payment-uri** | Create ZIP-321 payment URIs for receiving funds | ✅ Working |
+| **parse-payment-uri** | Parse ZIP-321 URIs into structured data | ✅ Working |
+| **wallet-persist** | Create/unlock encrypted wallets with BIP-39 mnemonic backup | ✅ Working |
+| **viewing-keys** | Export IVK/FVK/UFVK for selective disclosure (ZIP-316) | ✅ Working |
+| **check-balance** | Query shielded balance via lightwalletd | 🔄 Planned |
+| **send-payment** | Send z-to-z shielded payments | 🔄 Planned |
 
-### Future Skills
-
-| Skill | Description | Status |
-|-------|-------------|--------|
-| `check-balance` | Check address balance | 🔄 Planned |
-| `send-payment` | Send ZCash payments | 🔄 Planned |
-| `generate-viewing-key` | Generate viewing keys | 🔄 Planned |
-
-## 🔧 Skills API
-
-### generate-address
-
-Generate new ZCash shielded addresses using librustzcash.
-
-```javascript
-const result = await zcashSkills.generateAddress({
-  network: 'mainnet' // or 'testnet'
-});
-
-// Returns:
-{
-  success: true,
-  address: 'zs1abc123def456ghi789...',
-  network: 'mainnet',
-  type: 'shielded',
-  execution: 'local',
-  message: 'Generated new ZCash mainnet address'
-}
-```
-
-### validate-address
-
-Validate ZCash address format and detect network/type.
-
-```javascript
-const result = await zcashSkills.validateAddress({
-  address: 'ztestsapling1abc123...'
-});
-
-// Returns:
-{
-  success: true,
-  valid: true,
-  network: 'testnet',
-  type: 'shielded',
-  recommendations: ['Address supports privacy-preserving transactions']
-}
-```
-
-### create-payment-uri
-
-Create ZIP-321 compliant payment URIs.
-
-```javascript
-const result = await zcashSkills.createPaymentUri({
-  address: 'ztestsapling1abc123...',
-  amount: 0.001,           // Optional
-  memo: 'Payment memo',    // Optional
-  label: 'Store Purchase'  // Optional
-});
-
-// Returns:
-{
-  success: true,
-  uri: 'zcash:ztestsapling1...?amount=0.001&memo=Payment%20memo',
-  details: { address, amount, memo, label }
-}
-```
-
-### parse-payment-uri
-
-Parse ZIP-321 payment URIs into structured data.
-
-```javascript
-const result = await zcashSkills.parsePaymentUri({
-  uri: 'zcash:ztestsapling1...?amount=0.001&memo=Coffee'
-});
-
-// Returns:
-{
-  success: true,
-  parsed: {
-    address: 'ztestsapling1abc123...',
-    amount: 0.001,
-    memo: 'Coffee',
-    label: null
-  }
-}
-```
-
-## 🤖 AI Agent Integration
-
-### OpenClaw Integration
-
-```javascript
-// OpenClaw skill file
-const zcashSkills = require('zcashskills');
-
-class PrivacyPaymentAgent {
-  async generatePrivateAddress(network = 'mainnet') {
-    const result = await zcashSkills.generateAddress({ network });
-    
-    if (result.success) {
-      return `🔐 Generated private ${network} address: ${result.address}`;
-    } else {
-      return `❌ Failed to generate address: ${result.error}`;
-    }
-  }
-  
-  async createPaymentRequest(address, amount, memo) {
-    const validation = await zcashSkills.validateAddress({ address });
-    if (!validation.valid) {
-      return `❌ Invalid address: ${address}`;
-    }
-
-    const uri = await zcashSkills.createPaymentUri({ address, amount, memo });
-    if (uri.success) {
-      return `💳 Payment request: ${uri.uri}`;
-    } else {
-      return `❌ Failed to create payment request: ${uri.error}`;
-    }
-  }
-}
-
-module.exports = PrivacyPaymentAgent;
-```
-
-### LangChain Tool Integration
-
-```javascript
-const { DynamicTool } = require('langchain/tools');
-const zcashSkills = require('zcashskills');
-
-const generateZcashTool = new DynamicTool({
-  name: "generate-zcash-address",
-  description: "Generate a ZCash shielded address for privacy payments",
-  func: async (input) => {
-    const { network = 'mainnet' } = JSON.parse(input);
-    const result = await zcashSkills.generateAddress({ network });
-    return JSON.stringify(result);
-  }
-});
-
-const createPaymentTool = new DynamicTool({
-  name: "create-zcash-payment-uri", 
-  description: "Create a ZCash payment URI for requesting payments",
-  func: async (input) => {
-    const params = JSON.parse(input);
-    const result = await zcashSkills.createPaymentUri(params);
-    return JSON.stringify(result);
-  }
-});
-
-module.exports = { generateZcashTool, createPaymentTool };
-```
-
-## 🏗️ Architecture
-
-### Local Execution
-
-ZCashSkills runs entirely on your agent's server with no external dependencies:
-
-- ✅ **Rust cryptography** compiled to native Node.js modules
-- ✅ **librustzcash** integration for official ZCash cryptographic operations  
-- ✅ **Cross-platform binaries** for Linux, macOS, and Windows
-- ✅ **Zero network calls** for core cryptographic operations
-
-### Platform Support
-
-Pre-compiled binaries are provided for:
-
-- **linux-x64** - Most servers and cloud environments
-- **darwin-x64** - Intel-based macOS systems
-- **darwin-arm64** - Apple Silicon Macs (M1/M2/M3)
-- **win32-x64** - Windows servers and development machines
-
-### Security
-
-- 🔐 **Private keys** generated and stored locally
-- 🚫 **No external API calls** for cryptographic operations
-- 🔍 **Auditable code** - all source code included
-- 🛡️ **Official cryptography** - uses librustzcash
-
-## 🧪 Development
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 16+
-- Rust (only if building from source)
+- Rust toolchain (for building from source): https://rustup.rs/
 
-### Building from Source
+### Install & Build
 
 ```bash
 git clone https://github.com/konradgnat/zcashskills.git
 cd zcashskills
 npm install
-npm run build
-npm test
+cd native && cargo build --release && cd ..
+cp native/index.node prebuilds/darwin-arm64/zcash-native.node  # adjust platform
+npm test  # 41 tests should pass
 ```
 
-### Running Tests
+### Demo: Full Wallet Flow
+
+```javascript
+const zcash = require('./lib/index');
+
+async function demo() {
+  // 1. Create an encrypted wallet (seed never leaves Rust)
+  const wallet = await zcash.walletPersist.createWallet({
+    passphrase: 'my-secure-passphrase-here',
+    network: 'mainnet',
+    walletPath: './my-wallet.json'
+  });
+  console.log('Address:', wallet.address);
+  console.log('Mnemonic (SAVE THIS):', wallet.mnemonic);
+  // wallet.json is encrypted with Argon2id + XChaCha20-Poly1305
+
+  // 2. Create a payment URI so someone can send you ZEC
+  const uri = await zcash.createPaymentUri({
+    address: wallet.address,
+    amount: 0.01,
+    memo: 'Test payment'
+  });
+  console.log('Payment URI:', uri.uri);
+
+  // 3. Later: unlock the wallet
+  const loaded = await zcash.walletPersist.loadWallet({
+    passphrase: 'my-secure-passphrase-here',
+    walletPath: './my-wallet.json'
+  });
+  console.log('Unlocked address:', loaded.address);
+
+  // 4. Export a viewing key for an auditor (privacy-safe)
+  const ivk = await zcash.viewingKeys.getIncomingViewingKey({
+    passphrase: 'my-secure-passphrase-here',
+    walletPath: './my-wallet.json'
+  });
+  console.log('Incoming Viewing Key:', ivk.viewingKey);
+  // Starts with uivk1... — only reveals incoming transactions
+
+  // 5. Export full viewing key (requires explicit confirmation)
+  const fvk = await zcash.viewingKeys.getFullViewingKey({
+    passphrase: 'my-secure-passphrase-here',
+    walletPath: './my-wallet.json',
+    confirm: true  // Required — FVK exposes outgoing tx graph
+  });
+  console.log('Full Viewing Key:', fvk.viewingKey);
+  // Starts with uview1... — ZIP-316 bech32m encoded
+}
+
+demo().catch(console.error);
+```
+
+## Security Model
+
+- **Seed encryption**: Argon2id KDF (OWASP params) + XChaCha20-Poly1305 AEAD
+- **Key isolation**: Raw seed is generated, encrypted, and zeroed inside Rust — never crosses FFI as plaintext
+- **Wallet files**: Encrypted JSON with 0600 permissions, includes KDF params and birthday height
+- **BIP-39 backup**: 24-word mnemonic phrase shown once at creation
+- **Viewing key privacy**: IVK (incoming only) is the default export; FVK (exposes outgoing graph) requires explicit `confirm: true`
+- **No network calls**: All cryptographic operations are purely local
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│                  JS Layer                    │
+│  skills/generate-address/index.js           │
+│  skills/validate-address/index.js           │
+│  skills/create-payment-uri/index.js         │
+│  skills/parse-payment-uri/index.js          │
+│  skills/wallet-persist/index.js             │
+│  skills/viewing-keys/index.js               │
+│  lib/index.js  lib/utils.js  lib/constants.js│
+├─────────────────────────────────────────────┤
+│              lib/native-loader.js            │
+│         (platform detection + loading)       │
+├─────────────────────────────────────────────┤
+│              Rust Native Module              │
+│            native/src/lib.rs                 │
+│                                              │
+│  generateShieldedAddress  validateAddress    │
+│  createWallet             loadWallet         │
+│  deriveViewingKey                            │
+│                                              │
+│  Crates: zcash_keys 0.12, zcash_address 0.10│
+│          bip39 2.0, argon2 0.5, chacha20poly1305│
+│          neon 0.10 (Node.js FFI)             │
+└─────────────────────────────────────────────┘
+```
+
+## AI Agent Integration
+
+### OpenClaw Skill
+
+```javascript
+const zcash = require('zcashskills');
+
+// Agent creates a wallet for a user
+const wallet = await zcash.walletPersist.createWallet({
+  passphrase: userPassphrase,
+  network: 'mainnet',
+  walletPath: `./wallets/${userId}.json`
+});
+
+// Agent generates a payment request
+const paymentUri = await zcash.createPaymentUri({
+  address: wallet.address,
+  amount: 0.5,
+  memo: 'Payment for services'
+});
+
+// Share the URI — user pays from any ZCash wallet
+console.log(`Pay here: ${paymentUri.uri}`);
+```
+
+### LangChain Tools
+
+```javascript
+const { DynamicTool } = require('langchain/tools');
+const zcash = require('zcashskills');
+
+const createWalletTool = new DynamicTool({
+  name: "create-zcash-wallet",
+  description: "Create an encrypted ZCash wallet with a shielded address",
+  func: async (input) => {
+    const { passphrase, network } = JSON.parse(input);
+    const result = await zcash.walletPersist.createWallet({
+      passphrase, network, walletPath: './agent-wallet.json'
+    });
+    return JSON.stringify({
+      address: result.address,
+      mnemonic: result.mnemonic,
+      message: 'Wallet created. Save the mnemonic phrase securely.'
+    });
+  }
+});
+```
+
+## API Reference
+
+### zcash.walletPersist.createWallet(options)
+
+Create a new encrypted wallet.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| passphrase | string | Min 8 chars. Used to derive encryption key via Argon2id |
+| network | string | `'mainnet'` or `'testnet'` |
+| walletPath | string | Optional. Path for wallet.json (default: `./zcash-wallet.json`) |
+
+Returns: `{ success, address, mnemonic, walletPath, birthdayHeight, network }`
+
+### zcash.walletPersist.loadWallet(options)
+
+Unlock an existing wallet.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| passphrase | string | Same passphrase used at creation |
+| walletPath | string | Path to wallet.json |
+
+Returns: `{ success, address, network, birthdayHeight, createdAt }`
+
+### zcash.viewingKeys.getIncomingViewingKey(options)
+
+Export incoming viewing key (privacy-safe — reveals only inbound transactions).
+
+Returns: `{ success, viewingKey, keyType: 'incoming' }` — key starts with `uivk1...`
+
+### zcash.viewingKeys.getFullViewingKey(options)
+
+Export full viewing key (requires `confirm: true` — exposes outgoing tx graph).
+
+Returns: `{ success, viewingKey, keyType: 'full' }` — key starts with `uview1...` (ZIP-316 bech32m)
+
+### zcash.generateAddress(options)
+
+Generate a new shielded address (no wallet persistence).
+
+### zcash.validateAddress(options)
+
+Validate a ZCash address and detect network/type.
+
+### zcash.createPaymentUri(options)
+
+Create a ZIP-321 payment URI.
+
+### zcash.parsePaymentUri(options)
+
+Parse a ZIP-321 payment URI.
+
+## Tests
 
 ```bash
-# Run all tests
-npm test
-
-# Run unit tests only
-npm run test:unit
-
-# Run integration tests only  
-npm run test:integration
+npm test           # 41 tests, 3 suites
+npm run test:unit  # Unit tests only
 ```
 
-## 🤝 Contributing
+## Roadmap
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+- [x] Phase 1: Encrypted wallet persistence (Argon2id + XChaCha20-Poly1305)
+- [x] Phase 2: Viewing key export (IVK/FVK/UFVK per ZIP-316)
+- [ ] Phase 3: Balance checking via lightwalletd
+- [ ] Phase 4: Shielded send (z-to-z with Sapling proofs)
+- [ ] Phase 5: npm publish + OpenClaw ClawHub skill + ZCG grant application
 
-### Adding New Skills
+## ZCash Community Grants
 
-1. Create skill directory: `skills/my-new-skill/`
-2. Implement skill: `skills/my-new-skill/index.js`
-3. Add tests: `test/unit/my-new-skill.test.js`
-4. Update documentation
-5. Submit pull request
+This project targets [ZCash Community Grants](https://zcashcommunitygrants.org/) funding in the categories:
+- **SDK** — First Node.js ZCash wallet SDK using official librustzcash
+- **Key-management tools** — Encrypted seed persistence with BIP-39 backup
+- **Easy one-click shielded payments** — AI agent-powered payment workflows
 
-## 📄 License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE)
 
-## 🔗 Links
+## Acknowledgments
 
-- [GitHub Repository](https://github.com/konradgnat/zcashskills)
-- [NPM Package](https://www.npmjs.com/package/zcashskills)
-- [Issue Tracker](https://github.com/konradgnat/zcashskills/issues)
-- [ZCash Foundation](https://www.zfnd.org/)
-- [OpenClaw Platform](https://openclaw.ai/)
-
-## 🏆 Acknowledgments
-
-- [ZCash Foundation](https://www.zfnd.org/) for the amazing privacy technology
-- [librustzcash](https://github.com/zcash/librustzcash) for the cryptographic foundation
-- [Austin Griffith](https://github.com/austintgriffith/ethskills) for ethskills inspiration
-- [OpenClaw](https://openclaw.ai/) for the AI agent platform
-
----
-
-**Made with ❤️ for the privacy-preserving future of AI agents**
+- [librustzcash](https://github.com/zcash/librustzcash) — Official ZCash cryptographic foundation
+- [ZCash Foundation](https://www.zfnd.org/) — Privacy technology
+- [ethskills](https://github.com/austintgriffith/ethskills) — Inspiration (Austin Griffith)
+- [OpenClaw](https://openclaw.ai/) — AI agent platform
