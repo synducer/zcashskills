@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Users can generate, persist, and control a real ZCash shielded wallet through an AI agent — receiving, sending, and verifying private payments without ever exposing keys to external services.
-**Current focus:** Phase 2 — Viewing Keys
+**Current focus:** Phase 3 — Balance and Sync
 
 ## Current Position
 
-Phase: 2 of 5 (Viewing Keys)
-Plan: 2 of 2 in current phase (plan 02 complete — phase 02 complete)
-Status: Phase 2 complete, ready for Phase 3
-Last activity: 2026-03-20 — Plan 02-02 complete (JS viewing-keys skill, FVK gate, 15 unit tests, lib/index wiring)
+Phase: 3 of 5 (Balance and Sync)
+Plan: 2 of N in current phase (plan 03-02 complete)
+Status: Phase 3 in progress — JS gRPC client complete, Rust scan layer (Plan 01) also complete
+Last activity: 2026-03-20 — Plan 03-02 complete (gRPC client, proto files, fetchBlocksAsProtoBytes returning Buffer[])
 
-Progress: [████░░░░░░] 40%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -29,9 +29,10 @@ Progress: [████░░░░░░] 40%
 |-------|-------|-------|----------|
 | 01-wallet-persistence | 2 | 7 min | 3.5 min |
 | 02-viewing-keys | 2 | 5 min | 2.5 min |
+| 03-balance-and-sync | 2 (so far) | 2+ min | ~2 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (2 min), 02-02 (3 min)
+- Last 5 plans: 01-01 (3 min), 01-02 (4 min), 02-01 (2 min), 02-02 (3 min), 03-02 (2 min)
 - Trend: stable
 
 *Updated after each plan completion*
@@ -58,6 +59,8 @@ Recent decisions affecting current work:
 - [Phase 02-01]: UIVK open question resolved: uivk.encode(&Network::MainNetwork) compiles correctly with public API — private render() path only in tests
 - [Phase 02-02]: FVK gate checked before any I/O — confirm: true checked as first statement in getFullViewingKey, no native call or file read occurs without explicit opt-in
 - [Phase 02-02]: Test strategy — real temp wallet file + native mock — avoids fs mock complexity, matches wallet-persist.test.js pattern
+- [Phase 03-02]: protobufjs re-encoding: grpc-js deserializes CompactBlock to JS objects; re-encode via protobufjs encode().finish() so Rust prost receives raw bytes
+- [Phase 03-02]: keepCase:true in proto-loader preserves snake_case field names matching Rust prost wire format
 
 ### Pending Todos
 
@@ -72,5 +75,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 02-02-PLAN.md — JS viewing-keys skill, FVK gate, 15 unit tests, lib/index wiring — Phase 2 complete
+Stopped at: Completed 03-02-PLAN.md — gRPC client module, proto files, fetchBlocksAsProtoBytes returning Buffer[] — Phase 3 Plan 02 complete
 Resume file: None
