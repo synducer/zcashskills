@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 3 of 5 (Balance and Sync)
-Plan: 1 of 4 in current phase complete (03-01-PLAN.md complete — scan_blocks Neon function)
-Status: Phase 3 in progress — Plan 01 complete (Rust scan_blocks), Plan 02 complete (gRPC client), Plans 03+04 pending
-Last activity: 2026-03-20 — Plan 03-01 complete (scan_blocks Neon function, zcash_client_backend 0.21, Sapling note decryption)
+Plan: 3 of 4 in current phase complete (03-03-PLAN.md complete — balance-check skill)
+Status: Phase 3 in progress — Plan 01 complete (Rust scan_blocks), Plan 02 complete (gRPC client), Plan 03 complete (balance-check skill), Plan 04 pending
+Last activity: 2026-03-20 — Plan 03-03 complete (balance-check skill: checkBalance wires Rust scanner + gRPC client, SYNC-01 + SYNC-02 satisfied)
 
-Progress: [█████░░░░░] 50%
+Progress: [███████░░░] 70%
 
 ## Performance Metrics
 
@@ -29,10 +29,10 @@ Progress: [█████░░░░░] 50%
 |-------|-------|-------|----------|
 | 01-wallet-persistence | 2 | 7 min | 3.5 min |
 | 02-viewing-keys | 2 | 5 min | 2.5 min |
-| 03-balance-and-sync | 3 (so far) | 16+ min | ~5 min |
+| 03-balance-and-sync | 4 (so far) | 21+ min | ~5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (4 min), 02-01 (2 min), 02-02 (3 min), 03-02 (2 min), 03-01 (14 min)
+- Last 5 plans: 02-01 (2 min), 02-02 (3 min), 03-01 (14 min), 03-02 (2 min), 03-03 (5 min)
 - Trend: 03-01 longer due to API discovery + first zcash_client_backend integration
 
 *Updated after each plan completion*
@@ -68,6 +68,9 @@ Recent decisions affecting current work:
 - [Phase 03-01]: TypedArray trait must be imported explicitly (use neon::types::buffer::TypedArray) for JsBuffer.as_slice() in napi-6 mode
 - [Phase 03-01]: prost added directly to Cargo.toml for Message trait scope; same version (0.14) as zcash_client_backend transitive dep — no conflict
 - [Phase 03-01]: npm run build: cargo build --release --manifest-path native/Cargo.toml && cp native/index.node prebuilds/darwin-arm64/zcash-native.node
+- [Phase 03-03]: keyType='full' enforced in checkBalance — ScanningKeys::from_account_ufvks requires UFVK, not UIVK; 'full' passed explicitly to deriveViewingKey
+- [Phase 03-03]: v1 invariant: spendableZatoshis === confirmedZatoshis — Phase 3 receive-only wallet; Phase 4 adds nullifier tracking
+- [Phase 03-03]: birthdayHeight fallback to tipHeight - 100 when wallet has missing or 0 birthdayHeight (Phase 1 placeholder)
 
 ### Pending Todos
 
@@ -82,5 +85,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-20
-Stopped at: Completed 03-01-PLAN.md — scan_blocks Neon function, zcash_client_backend 0.21, Sapling note decryption via scan_block API
+Stopped at: Completed 03-03-PLAN.md — balance-check skill wiring Rust scanner and gRPC client, SYNC-01 and SYNC-02 satisfied, 54 tests passing
 Resume file: None
