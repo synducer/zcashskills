@@ -57,7 +57,13 @@ Plans:
   1. User can query shielded balance and receive separate confirmed and spendable amounts (not a single merged number)
   2. Balance query runs compact block scanning in Rust using the wallet IVK — no note decryption happens in JavaScript
   3. User can view transaction history with memo field contents for received notes
-**Plans**: TBD
+**Plans**: 4 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Rust: scanBlocks Neon function (zcash_client_backend scan_block, UFVK decryption, serde_json result)
+- [ ] 03-02-PLAN.md — JS: proto files, lightwalletd.js gRPC client (createClient, getLatestBlock, fetchBlocksAsProtoBytes)
+- [ ] 03-03-PLAN.md — JS: balance-check skill, lib/index.js wiring, unit tests (checkBalance — SYNC-01 + SYNC-02)
+- [ ] 03-04-PLAN.md — JS+Rust: memo retrieval (getTransactionHistory, decryptMemo Neon function — SYNC-03)
 
 ### Phase 4: Shielded Send
 **Goal**: Users can broadcast a z-to-z shielded payment with encrypted memo and correct ZIP-317 fee
@@ -90,6 +96,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Wallet Persistence | 2/2 | Complete    | 2026-03-19 |
 | 2. Viewing Keys | 1/2 | Complete    | 2026-03-19 |
-| 3. Balance and Sync | 0/? | Not started | - |
+| 3. Balance and Sync | 0/4 | Not started | - |
 | 4. Shielded Send | 0/? | Not started | - |
 | 5. Packaging and Distribution | 0/? | Not started | - |
