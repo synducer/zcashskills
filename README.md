@@ -6,9 +6,9 @@
 
 ## What This Is
 
-ZCashSkills is the first ZCash wallet SDK designed for AI agents (OpenClaw, LangChain). It wraps the official [librustzcash](https://github.com/zcash/librustzcash) cryptographic library into a native Node.js module via Neon bindings, providing shielded wallet operations with **zero external network calls** for all cryptographic operations.
+ZCashSkills is the first ZCash wallet SDK designed for AI agents (OpenClaw, LangChain). It wraps the official [librustzcash](https://github.com/zcash/librustzcash) cryptographic library into a native Node.js module via Neon bindings, providing shielded wallet operations with full transaction support.
 
-All private key operations happen inside Rust — seeds are encrypted before crossing the FFI boundary and never appear in JavaScript memory.
+All private key operations happen inside Rust — seeds are encrypted before crossing the FFI boundary and never appear in JavaScript memory. Transaction building and Groth16 proof generation also execute entirely in Rust.
 
 ## Features
 
@@ -20,8 +20,7 @@ All private key operations happen inside Rust — seeds are encrypted before cro
 | **parse-payment-uri** | Parse ZIP-321 URIs into structured data | ✅ Working |
 | **wallet-persist** | Create/unlock encrypted wallets with BIP-39 mnemonic backup | ✅ Working |
 | **viewing-keys** | Export IVK/FVK/UFVK for selective disclosure (ZIP-316) | ✅ Working |
-| **check-balance** | Query shielded balance via lightwalletd | 🔄 Planned |
-| **send-payment** | Send z-to-z shielded payments | 🔄 Planned |
+| **send-transaction** | Send z-to-z shielded payments with Sapling Groth16 proofs | ✅ Working |
 
 ## Quick Start
 
@@ -33,12 +32,10 @@ All private key operations happen inside Rust — seeds are encrypted before cro
 ### Install & Build
 
 ```bash
-git clone https://github.com/konradgnat/zcashskills.git
+git clone https://github.com/synducer/zcashskills.git
 cd zcashskills
 npm install
 cd native && cargo build --release && cd ..
-cp native/index.node prebuilds/darwin-arm64/zcash-native.node  # adjust platform
-npm test  # 41 tests should pass
 ```
 
 ### Demo: Full Wallet Flow
@@ -72,35 +69,65 @@ async function demo() {
   });
   console.log('Unlocked address:', loaded.address);
 
-  // 4. Export a viewing key for an auditor (privacy-safe)
+  // 4. Send shielded ZCash
+  const tx = await zcash.sendTransaction({
+    passphrase: 'my-secure-passphrase-here',
+    toAddress: 'zs1recipient...',
+    amount: 0.5,
+    memo: 'Payment for services',
+    walletPath: './my-wallet.json'
+  });
+  console.log('Transaction ID:', tx.txId);
+
+  // 5. Export a viewing key for an auditor (privacy-safe)
   const ivk = await zcash.viewingKeys.getIncomingViewingKey({
     passphrase: 'my-secure-passphrase-here',
     walletPath: './my-wallet.json'
   });
   console.log('Incoming Viewing Key:', ivk.viewingKey);
   // Starts with uivk1... — only reveals incoming transactions
-
-  // 5. Export full viewing key (requires explicit confirmation)
-  const fvk = await zcash.viewingKeys.getFullViewingKey({
-    passphrase: 'my-secure-passphrase-here',
-    walletPath: './my-wallet.json',
-    confirm: true  // Required — FVK exposes outgoing tx graph
-  });
-  console.log('Full Viewing Key:', fvk.viewingKey);
-  // Starts with uview1... — ZIP-316 bech32m encoded
 }
 
 demo().catch(console.error);
 ```
 
+## Sending ZCash
+
+The `sendTransaction` skill handles the full shielded payment pipeline:
+
+1. **Wallet decryption** — Unlocks the encrypted seed in Rust
+2. **Proving parameters** — Downloads Sapling Groth16 params (~50MB, cached at `~/.zcash-params/`)
+3. **Block scanning** — Connects to lightwalletd via gRPC, trial-decrypts compact blocks to find spendable notes
+4. **Transaction building** — Constructs the Sapling transaction with Groth16 proofs (all in Rust)
+5. **Broadcasting** — Submits the signed transaction to the network via lightwalletd
+
+```javascript
+const result = await zcash.sendTransaction({
+  passphrase: 'your-passphrase',
+  toAddress: 'zs1...',           // Destination Sapling address
+  amount: 0.5,                   // Amount in ZEC
+  memo: 'Optional memo text',   // Up to 511 bytes
+  network: 'mainnet',           // 'mainnet' or 'testnet'
+});
+
+// Result: { success, txId, rawTx, amount, toAddress, fee, network }
+```
+
+**Lightwalletd servers used:**
+- Mainnet: `mainnet.lightwalletd.com:9067`
+- Testnet: `lightwalletd.testnet.electriccoin.co:9067`
+
+**Transaction fee:** 0.0001 ZEC (10,000 zatoshis) — ZIP-317 conventional fee.
+
 ## Security Model
 
 - **Seed encryption**: Argon2id KDF (OWASP params) + XChaCha20-Poly1305 AEAD
 - **Key isolation**: Raw seed is generated, encrypted, and zeroed inside Rust — never crosses FFI as plaintext
+- **Transaction signing**: Spending keys are derived and used entirely within Rust; Groth16 proofs generated in Rust
 - **Wallet files**: Encrypted JSON with 0600 permissions, includes KDF params and birthday height
 - **BIP-39 backup**: 24-word mnemonic phrase shown once at creation
 - **Viewing key privacy**: IVK (incoming only) is the default export; FVK (exposes outgoing graph) requires explicit `confirm: true`
-- **No network calls**: All cryptographic operations are purely local
+- **Proving parameters**: SHA-256 verified on download from z.cash official servers
 
 ## Architecture
 
@@ -113,7 +140,9 @@ demo().catch(console.error);
 │  skills/parse-payment-uri/index.js          │
 │  skills/wallet-persist/index.js             │
 │  skills/viewing-keys/index.js               │
+│  skills/send-transaction/index.js           │
 │  lib/index.js  lib/utils.js  lib/constants.js│
+│  lib/grpc-client.js  lib/params-loader.js   │
 ├─────────────────────────────────────────────┤
 │              lib/native-loader.js            │
 │         (platform detection + loading)       │
@@ -123,11 +152,19 @@ demo().catch(console.error);
 │                                              │
 │  generateShieldedAddress  validateAddress    │
 │  createWallet             loadWallet         │
-│  deriveViewingKey                            │
+│  deriveViewingKey         scanNotes          │
+│  createTransaction                           │
 │                                              │
 │  Crates: zcash_keys 0.12, zcash_address 0.10│
-│          bip39 2.0, argon2 0.5, chacha20poly1305│
+│          zcash_primitives 0.26, zcash_proofs │
+│          sapling-crypto 0.5, bip39 2.0       │
+│          argon2 0.5, chacha20poly1305        │
 │          neon 0.10 (Node.js FFI)             │
+├─────────────────────────────────────────────┤
+│              Network Layer (JS)              │
+│  lightwalletd gRPC (block sync + broadcast) │
+│  proto/service.proto + compact_formats.proto │
+│  @grpc/grpc-js + @grpc/proto-loader         │
 └─────────────────────────────────────────────┘
 ```
 
@@ -152,8 +189,14 @@ const paymentUri = await zcash.createPaymentUri({
   memo: 'Payment for services'
 });
 
-// Share the URI — user pays from any ZCash wallet
-console.log(`Pay here: ${paymentUri.uri}`);
+// Agent sends a shielded payment
+const tx = await zcash.sendTransaction({
+  passphrase: userPassphrase,
+  toAddress: recipientAddress,
+  amount: 0.25,
+  memo: 'Automated payment',
+  walletPath: `./wallets/${userId}.json`
+});
 ```
 
 ### LangChain Tools
@@ -162,24 +205,41 @@ console.log(`Pay here: ${paymentUri.uri}`);
 const { DynamicTool } = require('langchain/tools');
 const zcash = require('zcashskills');
 
-const createWalletTool = new DynamicTool({
-  name: "create-zcash-wallet",
-  description: "Create an encrypted ZCash wallet with a shielded address",
+const sendZcashTool = new DynamicTool({
+  name: "send-zcash",
+  description: "Send shielded ZCash to a destination address",
   func: async (input) => {
-    const { passphrase, network } = JSON.parse(input);
-    const result = await zcash.walletPersist.createWallet({
-      passphrase, network, walletPath: './agent-wallet.json'
+    const { passphrase, toAddress, amount, memo } = JSON.parse(input);
+    const result = await zcash.sendTransaction({
+      passphrase, toAddress, amount, memo
     });
     return JSON.stringify({
-      address: result.address,
-      mnemonic: result.mnemonic,
-      message: 'Wallet created. Save the mnemonic phrase securely.'
+      txId: result.txId,
+      amount: result.amount,
+      fee: result.fee,
+      message: result.message
     });
   }
 });
 ```
 
 ## API Reference
+
+### zcash.sendTransaction(options)
+
+Send shielded ZCash via Sapling.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| passphrase | string | Wallet passphrase |
+| toAddress | string | Destination Sapling address (`zs1...`) |
+| amount | number | Amount in ZEC (e.g. `0.5`) |
+| memo | string | Optional memo text (max 511 bytes) |
+| network | string | `'mainnet'` or `'testnet'` (default: `'mainnet'`) |
+| walletPath | string | Path to wallet.json (default: `~/.zcashskills/wallet.json`) |
+| serverUrl | string | Override lightwalletd server URL |
+
+Returns: `{ success, txId, rawTx, amount, amountZatoshis, toAddress, fee, feeZatoshis, network, memo }`
 
 ### zcash.walletPersist.createWallet(options)
 
@@ -189,7 +249,7 @@ Create a new encrypted wallet.
 |-------|------|-------------|
 | passphrase | string | Min 8 chars. Used to derive encryption key via Argon2id |
 | network | string | `'mainnet'` or `'testnet'` |
-| walletPath | string | Optional. Path for wallet.json (default: `./zcash-wallet.json`) |
+| walletPath | string | Optional. Path for wallet.json (default: `~/.zcashskills/wallet.json`) |
 
 Returns: `{ success, address, mnemonic, walletPath, birthdayHeight, network }`
 
@@ -235,7 +295,7 @@ Parse a ZIP-321 payment URI.
 ## Tests
 
 ```bash
-npm test           # 41 tests, 3 suites
+npm test           # Run all tests
 npm run test:unit  # Unit tests only
 ```
 
@@ -243,8 +303,8 @@ npm run test:unit  # Unit tests only
 
 - [x] Phase 1: Encrypted wallet persistence (Argon2id + XChaCha20-Poly1305)
 - [x] Phase 2: Viewing key export (IVK/FVK/UFVK per ZIP-316)
-- [ ] Phase 3: Balance checking via lightwalletd
-- [ ] Phase 4: Shielded send (z-to-z with Sapling proofs)
+- [x] Phase 3: Send shielded transactions (Sapling Groth16 proofs via lightwalletd)
+- [ ] Phase 4: Balance checking via lightwalletd (block scanning + trial decryption)
 - [ ] Phase 5: npm publish + OpenClaw ClawHub skill + ZCG grant application
 
 ## ZCash Community Grants
