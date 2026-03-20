@@ -21,6 +21,7 @@ All private key operations happen inside Rust — seeds are encrypted before cro
 | **wallet-persist** | Create/unlock encrypted wallets with BIP-39 mnemonic backup | ✅ Working |
 | **viewing-keys** | Export IVK/FVK/UFVK for selective disclosure (ZIP-316) | ✅ Working |
 | **send-transaction** | Send z-to-z shielded payments with Sapling Groth16 proofs | ✅ Working |
+| **check-balance** | Check shielded wallet balance by scanning the blockchain | ✅ Working |
 
 ## Quick Start
 
@@ -225,6 +226,19 @@ const sendZcashTool = new DynamicTool({
 
 ## API Reference
 
+### zcash.checkBalance(options)
+
+Check the shielded wallet balance by scanning the blockchain via lightwalletd.
+
+| Param | Type | Description |
+|-------|------|-------------|
+| passphrase | string | Wallet passphrase |
+| network | string | `'mainnet'` or `'testnet'` (default: `'mainnet'`) |
+| walletPath | string | Path to wallet.json (default: `~/.zcashskills/wallet.json`) |
+| serverUrl | string | Override lightwalletd server URL |
+
+Returns: `{ success, balance, balanceZatoshis, address, notes, notesUnspent, network, chainHeight }`
+
 ### zcash.sendTransaction(options)
 
 Send shielded ZCash via Sapling.
@@ -304,7 +318,7 @@ npm run test:unit  # Unit tests only
 - [x] Phase 1: Encrypted wallet persistence (Argon2id + XChaCha20-Poly1305)
 - [x] Phase 2: Viewing key export (IVK/FVK/UFVK per ZIP-316)
 - [x] Phase 3: Send shielded transactions (Sapling Groth16 proofs via lightwalletd)
-- [ ] Phase 4: Balance checking via lightwalletd (block scanning + trial decryption)
+- [x] Phase 4: Balance checking via lightwalletd (block scanning + trial decryption)
 - [ ] Phase 5: npm publish + OpenClaw ClawHub skill + ZCG grant application
 
 ## ZCash Community Grants
